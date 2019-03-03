@@ -1,0 +1,38 @@
+FROM ubuntu:18.04
+WORKDIR /
+ENV PATH $PATH:/usr/local/sh-tools/bin
+ENV CFLAGS "-fno-stack-protector -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0"
+RUN apt-get update \
+ && apt-get -y install --no-install-recommends \
+      build-essential \
+      gobjc \
+      wget \
+ && mkdir -p /build \
+ && cd /build \
+ && wget -nv http://ftp.jaist.ac.jp/pub/GNU/binutils/binutils-2.16.1.tar.bz2 \
+ && wget -nv http://ftp.tsukuba.wide.ad.jp/software/gcc/releases/gcc-3.4.5/gcc-3.4.5.tar.bz2 \
+ && tar jxf binutils-2.16.1.tar.bz2 \
+ && tar jxf gcc-3.4.5.tar.bz2 \
+ && rm -rf binutils-2.16.1/gprof/*.m \
+ && sed -i -e "s/O_CREAT/O_CREAT, 0755/g" gcc-3.4.5/gcc/collect2.c \
+ && mkdir -p binutils-2.16.1/build \
+ && cd binutils-2.16.1/build \
+ && ../configure --target=sh-elf --prefix=/usr/local/sh-tools \
+ && make -s -j8 \
+ && make -s install \
+ && cd ../.. \
+ && mkdir -p gcc-3.4.5/build \
+ && cd gcc-3.4.5/build \
+ && ../configure --target=sh-elf --enable-languages=c --prefix=/usr/local/sh-tools \
+ && make -s -j8 \
+ && make -s install \
+ && cd ../.. \
+ && rm -rf /build \
+ && apt-get -y autoremove \
+      build-essential \
+      gobjc \
+      wget \
+ && apt-get -y install --no-install-recommends \
+      make \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/* \
