@@ -1,0 +1,31 @@
+FROM ubuntu:16.04
+RUN apt-get update
+RUN apt-get install -y wget git make g++ 
+#RUN apt-get install -y lib32z1
+#RUN apt-get install -y lib32stdc++
+RUN apt-get install -y libc6-dev-i386
+RUN apt-get install -y vim
+WORKDIR /
+RUN wget -nv https://www.toppers.jp/download.cgi/asp_apsh2a_gcc-20110809.tar.gz
+RUN tar zxf asp_apsh2a_gcc-20110809.tar.gz
+WORKDIR /asp
+RUN sed -i "s/require \"getopt.pl\";/use Getopt::Std;/g" configure
+RUN sed -i "s/Getopt(/getopt(/g" configure
+RUN sed -i "s/do //g" configure
+RUN sed -i "s/-m2a-nofpu//g" arch/sh12a_gcc/Makefile.sh2a
+#RUN find . -type f -print0 | xargs -0 sed -i "s/char_t/char/g"
+WORKDIR /asp/cfg/cfg
+RUN wget -nv https://www.toppers.jp/download.cgi/cfg-linux-static-1_9_6.gz
+RUN gzip -d cfg-linux-static-1_9_6.gz
+RUN mv cfg-linux-static-1_9_6 cfg
+RUN chmod 755 cfg
+WORKDIR /asp/obj
+RUN ../configure -T apsh2a_gcc
+COPY sh-tools /usr/local/sh-tools/
+ENV PATH $PATH:/usr/local/sh-tools/bin
+RUN sed -i "s/require \"getopt.pl\";/use Getopt::Std;/g" ../utils/makedep
+RUN sed -i "s/Getopt(/getopt(/g" ../utils/makedep
+RUN sed -i "s/do //g" ../utils/makedep
+RUN make depend
+RUN make
+#ENTRYPOINT ["/bin/bash"]
